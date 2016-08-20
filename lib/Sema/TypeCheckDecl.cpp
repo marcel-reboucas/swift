@@ -42,6 +42,8 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
+#include "swift/AST/MscrStaticAnalyzer.hpp"
+
 using namespace swift;
 
 namespace {
@@ -2946,6 +2948,9 @@ public:
 
     if (!IsFirstPass)
       checkAccessibility(TC, PBD);
+      
+    
+    MscrStaticAnalyzer::Instance()->handleVarDecl(PBD);
 
     TC.checkDeclAttributes(PBD);
   }

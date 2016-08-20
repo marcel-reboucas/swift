@@ -23,7 +23,9 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/raw_ostream.h"
-
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/FileSystem.h"
 #include <iostream>
 #include <fstream>
 
@@ -37,7 +39,6 @@ bool MscrStaticAnalyzer::g_initialised;
 MscrStaticAnalyzer MscrStaticAnalyzer::g_instance;
 ofstream outputFile;
 
-
 //===----------------------------------------------------------------------===//
 //===                           Singleton Methods                          ===//
 //===----------------------------------------------------------------------===//
@@ -48,6 +49,7 @@ MscrStaticAnalyzer::MscrStaticAnalyzer()
     g_initialised = true;
     
     // open and clear the file
+    
     outputFile.open("build-output.txt", std::ofstream::out | std::ofstream::trunc);
     outputFile << "Starting build output file! \n";
     outputFile.close();
@@ -177,9 +179,60 @@ void MscrStaticAnalyzer::handleClassDecl(llvm::raw_ostream &OS, swift::ClassDecl
 }
 
 // Method used to handle variable (and constant) declarations.
-void MscrStaticAnalyzer::handleVarDecl(llvm::raw_ostream &OS, swift::VarDecl *VD) {
-    writeToOutput("Found new var decl.\n");
+void MscrStaticAnalyzer::handleVarDecl(swift::PatternBindingDecl *PBD) {
     
+    std::error_code EC;
+    llvm::raw_fd_ostream os("build-output2.txt", EC, llvm::sys::fs::OpenFlags::F_Append);
+    
+    for (unsigned i = 0, e = PBD->getNumPatternEntries(); i != e; ++i) {
+        auto entry = PBD->getPatternList()[i];
+    
+        
+        entry.getPattern()->forEachVariable([&](VarDecl *var) {
+            
+            if (auto Ty = var->getType()) {
+                auto &Ctx = Ty->getASTContext();
+                auto L = var->getLoc();
+                if (L.isValid()) {
+                    os << " location=";
+                    L.print(os, Ctx.SourceMgr);
+                }
+            }
+            
+            if (var->isLet()) {
+                 os << " Found new let decl! ";
+            } else {
+                 os << " Found new var decl! ";
+            }
+           
+            os << " Name: " << var->getFullName();
+            os << " isLet: " << var->isLet();
+            
+            if (var->hasType()) {
+                os << " Type: " << var->getType();
+            }
+            
+            os << "\n";
+        });
+    }
+
+//    writeToOutput("Found new var decl.\n");
+//    
+//    if(!VD->isImplicit()) {
+//        std::error_code EC;
+//        llvm::raw_fd_ostream os("build-output2.txt", EC, llvm::sys::fs::OpenFlags::F_Append);
+//        os << "\n";
+//        os << " Found new var decl! ";
+//        os << "; Name: " << VD->getFullName();
+//        os << "; isLet: " << VD->isLet();
+//    
+//        if (VD->hasType()) {
+//            os << "; Type: " << VD->getType();
+//        }
+//    }
+    //os << "Type: " << VD->getType();
+    //os.flush();
+    /*
     OS << "\n";
     OS << "Found new var decl! ";
     OS << "Name: " << VD->getFullName();
@@ -199,7 +252,7 @@ void MscrStaticAnalyzer::handleVarDecl(llvm::raw_ostream &OS, swift::VarDecl *VD
                 break;
         }
     }
-    OS << "\n;";
+    OS << "\n;";*/
     
 }
 
@@ -225,4 +278,15 @@ void MscrStaticAnalyzer::handleGuardStmt(llvm::raw_ostream &OS, swift::GuardStmt
     OS << "\n";
     OS << "Found Guard Statement! ";
     OS << "\n";
+}
+
+// Method used to handle var pattern statements.
+void MscrStaticAnalyzer::handleVarPatternStmt(swift::VarPattern *P) {
+    
+    if (P->isLet()) {
+        writeToOutput("Found let Stmt.\n");
+    } else {
+        writeToOutput("Found var Stmt.\n");
+    }
+   
 }

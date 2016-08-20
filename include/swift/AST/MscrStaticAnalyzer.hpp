@@ -26,6 +26,9 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/FileSystem.h"
 
 #include <iostream>
 #include <fstream>
@@ -44,7 +47,7 @@ public:
     // Method used to handle class declarations.
     void handleClassDecl(llvm::raw_ostream &OS, swift::ClassDecl *CD);
     // Method used to handle variable (and constants) declarations.
-    void handleVarDecl(llvm::raw_ostream &OS, swift::VarDecl *VD);
+    void handleVarDecl(swift::PatternBindingDecl *PBD);
     // Method used to handle parameter declarations.
     void handleFuncParameter(llvm::raw_ostream &OS, swift::ParamDecl *P);
     // Method used to handle if lets.
@@ -53,6 +56,9 @@ public:
     void handleIfStmt(llvm::raw_ostream &OS, swift::IfStmt *S);
     // Method used to handle guard statements.
     void handleGuardStmt(llvm::raw_ostream &OS, swift::GuardStmt *S);
+    // Method used to handle varpattern statements.
+    void handleVarPatternStmt(swift::VarPattern *P);
+
     
 private:
     
