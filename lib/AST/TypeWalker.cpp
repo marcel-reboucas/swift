@@ -16,7 +16,6 @@
 
 #include "swift/AST/TypeWalker.h"
 #include "swift/AST/TypeVisitor.h"
-#include "swift/AST/MscrStaticAnalyzer.hpp"
 
 using namespace swift;
 
@@ -81,7 +80,6 @@ class Traversal : public TypeVisitor<Traversal, bool>
   }
 
   bool visitAnyFunctionType(AnyFunctionType *ty) {
-    MscrStaticAnalyzer::Instance();
     if (doIt(ty->getInput()))
       return true;
     return doIt(ty->getResult());

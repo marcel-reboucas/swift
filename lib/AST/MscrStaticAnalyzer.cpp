@@ -37,7 +37,6 @@ bool MscrStaticAnalyzer::g_initialised;
 
 // dynamic initialisation
 MscrStaticAnalyzer MscrStaticAnalyzer::g_instance;
-ofstream outputFile;
 
 //===----------------------------------------------------------------------===//
 //===                           Singleton Methods                          ===//
@@ -47,12 +46,6 @@ ofstream outputFile;
 MscrStaticAnalyzer::MscrStaticAnalyzer()
 {
     g_initialised = true;
-    
-    // open and clear the file
-    
-    outputFile.open("build-output.txt", std::ofstream::out | std::ofstream::trunc);
-    outputFile << "Starting build output file! \n";
-    outputFile.close();
 }
 
 MscrStaticAnalyzer::~MscrStaticAnalyzer()
@@ -67,122 +60,15 @@ MscrStaticAnalyzer* MscrStaticAnalyzer::Instance()
 }
 
 //===----------------------------------------------------------------------===//
-//===                           Output File Methods                        ===//
-//===----------------------------------------------------------------------===//
-
-void MscrStaticAnalyzer::writeToOutput(const char* data)
-{
-    outputFile.open("example2.txt", std::ios_base::app);
-    outputFile << data;
-    outputFile.close();
-}
-
-
-//===----------------------------------------------------------------------===//
 //===                       Component Handler Methods                      ===//
 //===----------------------------------------------------------------------===//
 
-
-
-// Method used to handle function declarations.
-void MscrStaticAnalyzer::handleFuncDecl(llvm::raw_ostream &OS, swift::FuncDecl *FD)
-{
-    if (!(FD->isImplicit())) {
-        
-        writeToOutput("Found func decl.\n");
-        OS << "\n";
-        OS << "Found new explicit method! ";
-        OS << "Name: " << FD->getFullName();
-        OS << "\n;";
-        
-        // for each parameter in the function
-        for (auto pl : FD->getParameterLists()) {
-            for (auto P : *pl) {
-                handleFuncParameter(OS, P);
-            }
-        }
-    }
-}
-
-// Method used to handle function declarations.
-void MscrStaticAnalyzer::handleFuncParameter(llvm::raw_ostream &OS, swift::ParamDecl *P)
-{
-    writeToOutput("Found parameter!! \n");
-    OS << "Found parameter!! ";
-    
-    if (P->getFullName())
-        OS << '\"' << P->getFullName() << '\"';
-    else
-        OS << "'anonname=" << (const void*)P << '\'';
-    
-    
-    if (!P->getArgumentName().empty())
-        OS << " apiName=" << P->getArgumentName();
-    
-    OS << " type=";
-    if (P->hasType()) {
-        OS << '\'';
-        P->getType().print(OS);
-        OS << '\'';
-    } else
-        OS << "<null type>";
-    
-    if (!P->isLet())
-        OS << " mutable";
-    
-    if (P->isVariadic())
-        OS << " variadic";
-    
-    switch (P->getDefaultArgumentKind()) {
-        case DefaultArgumentKind::None: break;
-        case DefaultArgumentKind::Column:
-            OS << "#column";
-            break;
-        case DefaultArgumentKind::DSOHandle:
-            OS << "#dsohandle";
-            break;
-        case DefaultArgumentKind::File:
-            OS << "#file";
-            break;
-        case DefaultArgumentKind::Function:
-            OS << "#function";
-            break;
-        case DefaultArgumentKind::Inherited:
-            OS << "inherited";
-            break;
-        case DefaultArgumentKind::Line:
-            OS << "#line";
-            break;
-        case DefaultArgumentKind::Nil:
-            OS << "nil";
-            break;
-        case DefaultArgumentKind::EmptyArray:
-            OS << "[]";
-            break;
-        case DefaultArgumentKind::EmptyDictionary:
-            OS << "[:]";
-            break;
-        case DefaultArgumentKind::Normal:
-            OS << "normal";
-            break;
-    }
-}
-
-// Method used to handle class declarations.
-void MscrStaticAnalyzer::handleClassDecl(llvm::raw_ostream &OS, swift::ClassDecl *CD)
-{
-    writeToOutput("Found new class decl.\n");
-    OS << "\n";
-    OS << "Found new class decl! ";
-    OS << "Name: " << CD->getFullName();
-    OS << "\n;";
-}
 
 // Method used to handle variable (and constant) declarations.
 void MscrStaticAnalyzer::handleVarDecl(swift::PatternBindingDecl *PBD) {
     
     std::error_code EC;
-    llvm::raw_fd_ostream os("build-output2.txt", EC, llvm::sys::fs::OpenFlags::F_Append);
+    llvm::raw_fd_ostream os("build-metrics-output.txt", EC, llvm::sys::fs::OpenFlags::F_Append);
     
     for (unsigned i = 0, e = PBD->getNumPatternEntries(); i != e; ++i) {
         auto entry = PBD->getPatternList()[i];
@@ -206,7 +92,7 @@ void MscrStaticAnalyzer::handleVarDecl(swift::PatternBindingDecl *PBD) {
             }
            
             os << " Name: " << var->getFullName();
-            os << " isLet: " << var->isLet();
+            os << " IsLet: " << var->isLet();
             
             if (var->hasType()) {
                 os << " Type: " << var->getType();
@@ -215,78 +101,4 @@ void MscrStaticAnalyzer::handleVarDecl(swift::PatternBindingDecl *PBD) {
             os << "\n";
         });
     }
-
-//    writeToOutput("Found new var decl.\n");
-//    
-//    if(!VD->isImplicit()) {
-//        std::error_code EC;
-//        llvm::raw_fd_ostream os("build-output2.txt", EC, llvm::sys::fs::OpenFlags::F_Append);
-//        os << "\n";
-//        os << " Found new var decl! ";
-//        os << "; Name: " << VD->getFullName();
-//        os << "; isLet: " << VD->isLet();
-//    
-//        if (VD->hasType()) {
-//            os << "; Type: " << VD->getType();
-//        }
-//    }
-    //os << "Type: " << VD->getType();
-    //os.flush();
-    /*
-    OS << "\n";
-    OS << "Found new var decl! ";
-    OS << "Name: " << VD->getFullName();
-    OS << "Type: " << VD->getType();
-    
-    if (VD->hasAccessibility()) {
-        OS << " access=";
-        switch (VD->getFormalAccess()) {
-            case Accessibility::Private:
-                OS << "private";
-                break;
-            case Accessibility::Internal:
-                OS << "internal";
-                break;
-            case Accessibility::Public:
-                OS << "public";
-                break;
-        }
-    }
-    OS << "\n;";*/
-    
-}
-
-// Method used to handle if lets.
-void MscrStaticAnalyzer::handleIfLet(llvm::raw_ostream &OS, swift::OptionalSomePattern *P) {
-    writeToOutput("Found new IfLet.\n");
-    OS << "\n";
-    OS << "Found new IfLet! ";
-    OS << "\n";
-}
-
-// Method used to handle if statements.
-void MscrStaticAnalyzer::handleIfStmt(llvm::raw_ostream &OS, swift::IfStmt *S) {
-    writeToOutput("Found If Statement! \n");
-    OS << "\n";
-    OS << "Found If Statement! ";
-    OS << "\n";
-}
-
-// Method used to handle guard statements.
-void MscrStaticAnalyzer::handleGuardStmt(llvm::raw_ostream &OS, swift::GuardStmt *S) {
-    writeToOutput("Found Guard Stmt.\n");
-    OS << "\n";
-    OS << "Found Guard Statement! ";
-    OS << "\n";
-}
-
-// Method used to handle var pattern statements.
-void MscrStaticAnalyzer::handleVarPatternStmt(swift::VarPattern *P) {
-    
-    if (P->isLet()) {
-        writeToOutput("Found let Stmt.\n");
-    } else {
-        writeToOutput("Found var Stmt.\n");
-    }
-   
 }

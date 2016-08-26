@@ -30,6 +30,8 @@
 #include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include "llvm/Support/FileSystem.h"
+
 using namespace swift;
 
 #define DEF_COLOR(NAME, COLOR)\
@@ -1129,7 +1131,14 @@ void LLVM_ATTRIBUTE_USED ValueDecl::dumpRef() const {
 }
 
 void SourceFile::dump() const {
-  dump(llvm::errs());
+    
+    //DUMP PARA ARQUIVO! - mscr
+    std::error_code EC;
+    llvm::raw_fd_ostream outputFile("dumper-output.txt", EC, llvm::sys::fs::OpenFlags::F_Append);
+    dump(outputFile);
+    outputFile << "\n";
+    
+    //dump(llvm::errs());
 }
 
 void SourceFile::dump(llvm::raw_ostream &OS) const {

@@ -41,25 +41,10 @@ public:
     
     // Method used to get the instance of this Singleton.
     static MscrStaticAnalyzer* Instance();
-    
-    // Method used to handle function declarations.
-    void handleFuncDecl(llvm::raw_ostream &OS, swift::FuncDecl *FD);
-    // Method used to handle class declarations.
-    void handleClassDecl(llvm::raw_ostream &OS, swift::ClassDecl *CD);
+
     // Method used to handle variable (and constants) declarations.
     void handleVarDecl(swift::PatternBindingDecl *PBD);
-    // Method used to handle parameter declarations.
-    void handleFuncParameter(llvm::raw_ostream &OS, swift::ParamDecl *P);
-    // Method used to handle if lets.
-    void handleIfLet(llvm::raw_ostream &OS, swift::OptionalSomePattern *P);
-    // Method used to handle if statements.
-    void handleIfStmt(llvm::raw_ostream &OS, swift::IfStmt *S);
-    // Method used to handle guard statements.
-    void handleGuardStmt(llvm::raw_ostream &OS, swift::GuardStmt *S);
-    // Method used to handle varpattern statements.
-    void handleVarPatternStmt(swift::VarPattern *P);
 
-    
 private:
     
     MscrStaticAnalyzer();
@@ -71,9 +56,6 @@ private:
     
     // dynamic initialisation
     static MscrStaticAnalyzer g_instance;
-    ofstream outputFile;
-    
-    void writeToOutput(const char* data);
     
 };
 

@@ -67,6 +67,13 @@ static std::string displayName(StringRef MainExecutablePath) {
   return Name;
 }
 
+// Util para pegar envVar - mscr
+static std::string getEnvVar( std::string const & key )
+{
+    char * val = getenv( key.c_str() );
+    return val == NULL ? std::string("") : std::string(val);
+}
+
 /// Emits a Make-style dependencies file.
 static bool emitMakeDependencies(DiagnosticEngine &diags,
                                  DependencyTracker &depTracker,
@@ -707,6 +714,18 @@ static bool performCompile(CompilerInstance &Instance,
     return false;
   }
 
+    // DUMP! - mscr
+    if (getEnvVar("SWIFT_DUMP") != "") {
+        
+        SourceFile *SF = PrimarySourceFile;
+        if (!SF) {
+            SourceFileKind Kind = Invocation.getSourceFileKind();
+            SF = &Instance.getMainModule()->getMainSourceFile(Kind);
+        }
+        SF->dump();
+    }
+    
+    
   // If we were asked to print Clang stats, do so.
   if (opts.PrintClangStats && Context.getClangModuleLoader())
     Context.getClangModuleLoader()->printStatistics();
