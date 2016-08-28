@@ -2950,7 +2950,7 @@ public:
       checkAccessibility(TC, PBD);
       
     // Passa o PatternBindingDecl para ser processado - mscr
-    MscrStaticAnalyzer::Instance()->handleVarDecl(PBD);
+    //MscrStaticAnalyzer::Instance()->handleVarDecl(PBD);
 
     TC.checkDeclAttributes(PBD);
   }
