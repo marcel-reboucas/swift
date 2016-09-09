@@ -29,6 +29,7 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/FileSystem.h"
 
 using namespace swift;
 
@@ -614,38 +615,38 @@ namespace {
     }
 
     void printAccessors(AbstractStorageDecl *D) {
-      if (FuncDecl *Get = D->getGetter()) {
-        OS << "\n";
-        printRec(Get);
-      }
-      if (FuncDecl *Set = D->getSetter()) {
-        OS << "\n";
-        printRec(Set);
-      }
-      if (FuncDecl *MaterializeForSet = D->getMaterializeForSetFunc()) {
-        OS << "\n";
-        printRec(MaterializeForSet);
-      }
-      if (D->hasObservers()) {
-        if (FuncDecl *WillSet = D->getWillSetFunc()) {
-          OS << "\n";
-          printRec(WillSet);
-        }
-        if (FuncDecl *DidSet = D->getDidSetFunc()) {
-          OS << "\n";
-          printRec(DidSet);
-        }
-      }
-      if (D->hasAddressors()) {
-        if (FuncDecl *addressor = D->getAddressor()) {
-          OS << "\n";
-          printRec(addressor);
-        }
-        if (FuncDecl *mutableAddressor = D->getMutableAddressor()) {
-          OS << "\n";
-          printRec(mutableAddressor);
-        }
-      }
+//      if (FuncDecl *Get = D->getGetter()) {
+//        OS << "\n";
+//        printRec(Get);
+//      }
+//      if (FuncDecl *Set = D->getSetter()) {
+//        OS << "\n";
+//        printRec(Set);
+//      }
+//      if (FuncDecl *MaterializeForSet = D->getMaterializeForSetFunc()) {
+//        OS << "\n";
+//        printRec(MaterializeForSet);
+//      }
+//      if (D->hasObservers()) {
+//        if (FuncDecl *WillSet = D->getWillSetFunc()) {
+//          OS << "\n";
+//          printRec(WillSet);
+//        }
+//        if (FuncDecl *DidSet = D->getDidSetFunc()) {
+//          OS << "\n";
+//          printRec(DidSet);
+//        }
+//      }
+//      if (D->hasAddressors()) {
+//        if (FuncDecl *addressor = D->getAddressor()) {
+//          OS << "\n";
+//          printRec(addressor);
+//        }
+//        if (FuncDecl *mutableAddressor = D->getMutableAddressor()) {
+//          OS << "\n";
+//          printRec(mutableAddressor);
+//        }
+//      }
     }
 
     void visitParamDecl(ParamDecl *PD) {
@@ -878,12 +879,12 @@ namespace {
         OS << "_for=" << ASD->getFullName();
       }
       
-      for (auto VD: FD->getSatisfiedProtocolRequirements()) {
-        OS << '\n';
-        OS.indent(Indent+2) << "(conformance ";
-        VD->dumpRef(OS);
-        OS << ')';
-      }
+//      for (auto VD: FD->getSatisfiedProtocolRequirements()) {
+//        OS << '\n';
+//        OS.indent(Indent+2) << "(conformance ";
+//        VD->dumpRef(OS);
+//        OS << ')';
+//      }
 
       printAbstractFunctionDecl(FD);
 
@@ -1129,7 +1130,12 @@ void LLVM_ATTRIBUTE_USED ValueDecl::dumpRef() const {
 }
 
 void SourceFile::dump() const {
-  dump(llvm::errs());
+  std::error_code EC;
+    llvm::raw_fd_ostream outputFile("dumper-output.txt", EC, llvm::sys::fs::OpenFlags::F_Append);
+    dump(outputFile);
+    outputFile << "\n";
+    
+    //dump(llvm::errs());
 }
 
 void SourceFile::dump(llvm::raw_ostream &OS) const {
