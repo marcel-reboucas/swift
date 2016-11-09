@@ -389,7 +389,26 @@ namespace {
       }
 
       OS << Name;
+        
+        // If we have a source range and an ASTContext, print the source range.
+       
+        //MSCR: location
+        if (D->getStartLoc().isValid()) {
+            ASTContext &Ctx = D->getASTContext();
 
+            auto L = D->getLoc();
+            if (L.isValid()) {
+                OS << " location=";
+                L.print(OS, Ctx.SourceMgr);
+            }
+        
+            auto R = D->getSourceRange();
+            if (R.isValid()) {
+                OS << " range=";
+                R.print(OS, Ctx.SourceMgr, /*PrintText=*/false);
+            }
+        }
+        
       if (ShowColors)
         OS << llvm::sys::Process::ResetColor();
 
@@ -587,7 +606,8 @@ namespace {
     }
 
     void visitSourceFile(const SourceFile &SF) {
-      OS.indent(Indent) << "(source_file";
+      OS.indent(Indent) << "(source_file \"" << SF.getFilename() << "\"";
+        
       for (Decl *D : SF.Decls) {
         if (D->isImplicit())
           continue;
@@ -862,6 +882,7 @@ namespace {
     
     void visitFuncDecl(FuncDecl *FD) {
       printCommonAFD(FD, "func_decl");
+        
       if (FD->isStatic())
         OS << " type";
       if (auto *ASD = FD->getAccessorStorageDecl()) {
@@ -946,21 +967,21 @@ namespace {
     }
     
     void visitIfConfigDecl(IfConfigDecl *ICD) {
-      OS.indent(Indent) << "(#if_decl\n";
-      Indent += 2;
-      for (auto &Clause : ICD->getClauses()) {
-        OS.indent(Indent) << (Clause.Cond ? "(#if:\n" : "#else");
-        if (Clause.Cond)
-          printRec(Clause.Cond);
-        
-        for (auto D : Clause.Members) {
-          OS << '\n';
-          printRec(D);
-        }
-      }
-    
-      Indent -= 2;
-      OS << ')';
+//      OS.indent(Indent) << "(#if_decl\n";
+//      Indent += 2;
+//      for (auto &Clause : ICD->getClauses()) {
+//        OS.indent(Indent) << (Clause.Cond ? "(#if:\n" : "#else");
+//        if (Clause.Cond)
+//          printRec(Clause.Cond);
+//        
+//        for (auto D : Clause.Members) {
+//          OS << '\n';
+//          printRec(D);
+//        }
+//      }
+//    
+//      Indent -= 2;
+//      OS << ')';
     }
     
     void visitInfixOperatorDecl(InfixOperatorDecl *IOD) {
@@ -1271,21 +1292,21 @@ public:
   }
 
   void visitIfConfigStmt(IfConfigStmt *S) {
-    OS.indent(Indent) << "(#if_stmt\n";
-    Indent += 2;
-    for (auto &Clause : S->getClauses()) {
-      OS.indent(Indent) << (Clause.Cond ? "(#if:\n" : "#else");
-      if (Clause.Cond)
-        printRec(Clause.Cond);
-
-      OS << '\n';
-      Indent += 2;
-      printASTNodes(Clause.Elements, "elements");
-      Indent -= 2;
-    }
-    
-    Indent -= 2;
-    OS << ')';
+//    OS.indent(Indent) << "(#if_stmt\n";
+//    Indent += 2;
+//    for (auto &Clause : S->getClauses()) {
+//      OS.indent(Indent) << (Clause.Cond ? "(#if:\n" : "#else");
+//      if (Clause.Cond)
+//        printRec(Clause.Cond);
+//
+//      OS << '\n';
+//      Indent += 2;
+//      printASTNodes(Clause.Elements, "elements");
+//      Indent -= 2;
+//    }
+//    
+//    Indent -= 2;
+//    OS << ')';
   }
 
   void visitDoStmt(DoStmt *S) {
@@ -2106,6 +2127,23 @@ public:
   }
   void visitIfExpr(IfExpr *E) {
     printCommon(E, "if_expr") << '\n';
+      
+      // If we have a source range and an ASTContext, print the source range.
+      if (auto Ty = E->getType()) {
+          auto &Ctx = Ty->getASTContext();
+          auto L = E->getLoc();
+          if (L.isValid()) {
+              OS << " location=";
+              L.print(OS, Ctx.SourceMgr);
+          }
+          
+          auto R = E->getSourceRange();
+          if (R.isValid()) {
+              OS << " range=";
+              R.print(OS, Ctx.SourceMgr, /*PrintText=*/false);
+          }
+      }
+      
     printRec(E->getCondExpr());
     OS << '\n';
     printRec(E->getThenExpr());
